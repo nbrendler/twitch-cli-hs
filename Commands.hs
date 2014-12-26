@@ -12,6 +12,7 @@ import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad (when)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
+import qualified Data.ByteString.UTF8 as U
 import qualified Data.Map as M
 import Data.Maybe
 import Data.List
@@ -70,13 +71,16 @@ decodeChunks = decode . L.fromChunks
 
 display :: [[String]] -> IO ()
 display xs = do
-    let spacedLines = map (intercalate " ") xs
-    mapM_ putStrLn spacedLines
+    let spacedLines = map (U.fromString . intercalate " ") xs
+    mapM_ B.putStrLn spacedLines
 
 list :: String -> IO ()
 list arg 
     | arg == "games" = listGames >>= display
     | otherwise = listFollowing >>= display
+
+search :: String -> IO ()
+search arg = searchStreams arg >>= display
 
 getUrl :: String -> Url
 getUrl s = fromJust $ M.lookup s urls
@@ -102,6 +106,21 @@ listFollowing = do
             show (stViewers s)
             ]
 
+searchStreams :: String -> IO [[String]]
+searchStreams query = do
+    l <- getData $ getUrl "search" ++ query
+    let resultList = fromJust $ (decodeChunks l :: Maybe StreamList)
+    return $ map displayInfo $ streams resultList where
+        displayInfo s = [
+            (chName . stChannel) s,
+            (chGame . stChannel) s,
+            (chStatus . stChannel) s,
+            show (stViewers s)
+            ]
+
 opts :: Parser (IO ())
 opts = subparser
-    ( command "list" (info (list <$> argument str idm) idm))
+        (
+            command "list" (info (list <$> argument str idm) idm) <> 
+            command "search" (info (search <$> argument str idm) idm)
+        )

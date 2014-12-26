@@ -29,7 +29,9 @@ baseUrl = "https://api.twitch.tv/kraken"
 urls :: LinkMap
 urls = Map.fromList [
     ("topGames", baseUrl ++ "/games/top"),
-    ("following", baseUrl ++ "/streams/followed")]
+    ("following", baseUrl ++ "/streams/followed"),
+    ("search", baseUrl ++ "/search/streams?q=")
+    ]
 
 data TopGames = TopGames {
     tgTotal :: Int,
