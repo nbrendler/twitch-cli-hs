@@ -1,0 +1,4 @@
+dist
+.cabal-sandbox
+.oauth-data
+cabal.sandbox.config
