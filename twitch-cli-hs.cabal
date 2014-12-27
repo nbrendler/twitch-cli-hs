@@ -33,6 +33,7 @@ executable twitch
                        containers,
                        optparse-applicative,
                        directory,
-                       utf8-string
+                       utf8-string,
+                       process
   -- hs-source-dirs:      
   default-language:    Haskell2010

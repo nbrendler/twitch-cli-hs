@@ -5,6 +5,7 @@ module Commands  where
 
 import System.Directory
 import System.IO.Error
+import System.Process
 import Control.Exception
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad.Trans.Resource (MonadResource, runResourceT)
@@ -82,6 +83,11 @@ list arg
 search :: String -> IO ()
 search arg = searchStreams arg >>= display
 
+watch :: String -> IO ()
+watch arg = do
+    createProcess (proc "livestreamer" ["twitch.tv/" ++ arg, "best"])
+    return ()
+
 getUrl :: String -> Url
 getUrl s = fromJust $ M.lookup s urls
 
@@ -122,5 +128,6 @@ opts :: Parser (IO ())
 opts = subparser
         (
             command "list" (info (list <$> argument str idm) idm) <> 
-            command "search" (info (search <$> argument str idm) idm)
+            command "search" (info (search <$> argument str idm) idm) <>
+            command "watch" (info (watch <$> argument str idm) idm)
         )
