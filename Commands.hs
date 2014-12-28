@@ -30,10 +30,12 @@ import Data.Aeson (decode, FromJSON)
 import Options.Applicative
 
 import Types
+import Printer
 
 getAuthData :: IO B.ByteString
 getAuthData = do
-    B.readFile ".oauth-data" `catch` handleDoesNotExist where 
+    home <- getHomeDirectory
+    B.readFile (home ++ "/.twitch-cli-hs-oauth-data") `catch` handleDoesNotExist where 
         handleDoesNotExist e 
            | isDoesNotExistError e = return "" 
            | otherwise = throwIO e
@@ -69,11 +71,6 @@ worker manager req = do
 
 decodeChunks :: (FromJSON a) => [B.ByteString] -> Maybe a
 decodeChunks = decode . L.fromChunks
-
-display :: [[String]] -> IO ()
-display xs = do
-    let spacedLines = map (U.fromString . intercalate " ") xs
-    mapM_ B.putStrLn spacedLines
 
 list :: String -> IO ()
 list arg 
