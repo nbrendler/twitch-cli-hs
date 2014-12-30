@@ -30,7 +30,8 @@ urls :: LinkMap
 urls = Map.fromList [
     ("topGames", baseUrl ++ "/games/top"),
     ("following", baseUrl ++ "/streams/followed"),
-    ("search", baseUrl ++ "/search/streams?q=")
+    ("search", baseUrl ++ "/search/streams?q="),
+    ("follow", baseUrl ++ "/users/srguy/follows/channels/")
     ]
 
 data TopGames = TopGames {

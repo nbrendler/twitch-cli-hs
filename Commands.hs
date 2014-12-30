@@ -45,20 +45,32 @@ clientID :: B.ByteString
 clientID = "ff8j1xobdatp0psh0qkkmbziyv1y9td"
 
 
-getData :: Url -> IO [B.ByteString]
-getData s = runResourceT $ do
+requestBase :: Request -> Request
+requestBase req = req {requestHeaders = [
+    ("Accept","application/vnd.twitchtv.v2+json"),
+    ("Client-ID", clientID)
+    ]}
+
+addOauthData :: B.ByteString -> Request -> Request
+addOauthData oauth req = 
+        let headers = requestHeaders req
+            formatAuthData = case oauth of
+                "" -> ("","")
+                _ -> ("Authorization", oauth)
+            in req { requestHeaders = headers ++ [formatAuthData] }
+
+makeGet :: Request -> Request
+makeGet req = requestBase req { method = "GET" }
+
+makePut :: Request -> Request
+makePut req = requestBase req { method = "PUT" }
+
+makeRequest :: Url -> (Request -> Request) -> IO [B.ByteString]
+makeRequest url requestTransformer = runResourceT $ do
         manager <- liftIO $ newManager conduitManagerSettings
-        req <- parseUrl s
+        req <- parseUrl url
         oauth <- liftIO $ getAuthData
-        let req' = req {requestHeaders = [
-             ("Accept","application/vnd.twitchtv.v2+json"),
-             ("Client-ID", clientID),
-             formatAuthData
-             ]} where
-                 formatAuthData = case oauth of
-                    "" -> ("","")
-                    _ -> ("Authorization", oauth)
-                    
+        let req' = addOauthData oauth . requestTransformer $ req
         body <- worker manager req'
         body $$+- CL.consume
 
@@ -88,10 +100,9 @@ watch arg = do
 getUrl :: String -> Url
 getUrl s = fromJust $ M.lookup s urls
 
-
 listGames :: IO [[String]]
 listGames = do
-    l <- getData $ getUrl "topGames"
+    l <- makeRequest (getUrl "topGames") makeGet
     let topGames = fromJust $ (decodeChunks l :: Maybe TopGames)
         gameInfos = tgTop topGames
         displayInfo gi = [(gName . giGame) gi, show (giViewers gi)]
@@ -99,7 +110,7 @@ listGames = do
 
 listFollowing :: IO [[String]]
 listFollowing = do
-    l <- getData $ getUrl "following"
+    l <- makeRequest (getUrl "following") makeGet
     let streamList = fromJust $ (decodeChunks l :: Maybe StreamList)
     return $ map displayInfo $ streams streamList where
         displayInfo s = [
@@ -111,7 +122,7 @@ listFollowing = do
 
 searchStreams :: String -> IO [[String]]
 searchStreams query = do
-    l <- getData $ getUrl "search" ++ query
+    l <- makeRequest (getUrl "search" ++ query) makeGet
     let resultList = fromJust $ (decodeChunks l :: Maybe StreamList)
     return $ map displayInfo $ streams resultList where
         displayInfo s = [
@@ -121,10 +132,16 @@ searchStreams query = do
             show (stViewers s)
             ]
 
+followChannel :: String -> IO ()
+followChannel channelName = do
+        makeRequest (getUrl "follow" ++ channelName) makePut
+        putStrLn $ "Followed " ++ channelName
+
 opts :: Parser (IO ())
 opts = subparser
         (
-            command "list" (info (list <$> argument str idm) idm) <> 
-            command "search" (info (search <$> argument str idm) idm) <>
-            command "watch" (info (watch <$> argument str idm) idm)
+            command "list" (info (list <$> argument str (metavar "STUFF")) idm) <> 
+            command "search" (info (search <$> argument str (metavar "SEARCH")) idm) <>
+            command "watch" (info (watch <$> argument str (metavar "CHANNEL")) idm) <>
+            command "follow" (info (followChannel <$> argument str (metavar "CHANNEL")) idm)
         )
