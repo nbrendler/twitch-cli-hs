@@ -26,6 +26,6 @@ redify = wrapWithColor red
 
 display :: [[String]] -> IO ()
 display xs = do
-        let rows = map (zipWith (\f s -> f s) [greenify, blueify, yellowify, redify]) xs
+        let rows = map (zipWith ($) [greenify, blueify, yellowify, redify]) xs
         let columns = transpose rows
         printBox $ hsep 1 left (map (vcat left . map text) columns)
