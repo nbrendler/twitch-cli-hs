@@ -67,7 +67,7 @@ makePut req = requestBase req { method = "PUT" }
 
 makeRequest :: Url -> (Request -> Request) -> IO [B.ByteString]
 makeRequest url requestTransformer = runResourceT $ do
-        manager <- liftIO $ newManager conduitManagerSettings
+        manager <- liftIO $ newManager tlsManagerSettings
         req <- parseUrl url
         oauth <- liftIO $ getAuthData
         let req' = addOauthData oauth . requestTransformer $ req

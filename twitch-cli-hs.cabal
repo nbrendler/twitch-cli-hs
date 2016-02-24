@@ -17,9 +17,9 @@ cabal-version:       >=1.10
 
 executable twitch
   main-is:             Main.hs
-  -- other-modules:       
+  other-modules:       Commands, Types, Printer
   -- other-extensions:    
-  build-depends:       base >=4.7 && <4.8,
+  build-depends:       base,
                        HTTP,
                        http-conduit,
                        conduit,
