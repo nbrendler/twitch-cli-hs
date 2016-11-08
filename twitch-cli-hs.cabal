@@ -3,7 +3,7 @@
 
 name:                twitch-cli-hs
 version:             0.1.0.0
-synopsis:            CLI wrapper around the twitch api
+synopsis:            CLI wrapper around the twitch API
 -- description:         
 license:             MIT
 license-file:        LICENSE
@@ -35,6 +35,7 @@ executable twitch
                        directory,
                        utf8-string,
                        process,
-                       boxes
+                       boxes,
+                       data-default
   -- hs-source-dirs:      
   default-language:    Haskell2010

@@ -1,5 +1,6 @@
 module Printer (display) where
 
+import Types
 import Data.List (transpose)
 import Text.PrettyPrint.Boxes
 
@@ -24,8 +25,9 @@ yellowify = wrapWithColor yellow
 redify :: String -> String
 redify = wrapWithColor red
 
-display :: [[String]] -> IO ()
-display xs = do
-        let rows = map (zipWith ($) [greenify, blueify, yellowify, redify]) xs
-        let columns = transpose rows
-        printBox $ hsep 1 left (map (vcat left . map text) columns)
+display :: (Displayable a) =>  [a] -> IO ()
+display x = do
+  let xs = fmap dsp x
+  let rows = map (zipWith ($) [greenify, blueify, yellowify, redify]) xs
+  let columns = transpose rows
+  printBox $ hsep 1 left (map (vcat left . map text) columns)

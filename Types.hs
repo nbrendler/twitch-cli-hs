@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Types (
+    Displayable (..),
     TopGames (..),
     GameInfo (..),
     Game (..),
@@ -13,6 +14,7 @@ module Types (
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad (mzero)
 
+import Data.Default
 import qualified Data.Map as Map
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as L
@@ -28,11 +30,14 @@ baseUrl = "https://api.twitch.tv/kraken"
 
 urls :: LinkMap
 urls = Map.fromList [
-    ("topGames", baseUrl ++ "/games/top"),
+    ("games", baseUrl ++ "/games/top"),
     ("following", baseUrl ++ "/streams/followed"),
     ("search", baseUrl ++ "/search/streams?q="),
     ("follow", baseUrl ++ "/users/srguy/follows/channels/")
     ]
+
+class Displayable a where
+    dsp :: a -> [String]
 
 data TopGames = TopGames {
     tgTotal :: Int,
@@ -47,6 +52,9 @@ instance FromJSON TopGames where
         v .: "_links"
     parseJSON _ = mzero
 
+instance Default TopGames where
+    def = TopGames 0 [] (Map.fromList [])
+
 data GameInfo = GameInfo {
     giChannels :: Int,
     giGame :: Game,
@@ -59,6 +67,12 @@ instance FromJSON GameInfo where
         v .: "game" <*>
         v .: "viewers"
     parseJSON _ = mzero
+
+instance Displayable GameInfo where
+    dsp gi = [channels, name, viewers]
+            where channels = show $ giChannels gi
+                  name = (gName . giGame) gi
+                  viewers = show $ giViewers gi
 
 data Game = Game {
     gId :: Int,
@@ -79,6 +93,9 @@ instance FromJSON StreamList where
     parseJSON (J.Object v) = StreamList <$> v .: "streams"
     parseJSON _ = mzero
 
+instance Default StreamList where
+    def = StreamList []
+
 data Stream = Stream {
     stViewers :: Int,
     stChannel :: Channel
@@ -89,6 +106,14 @@ instance FromJSON Stream where
         v .: "viewers" <*>
         v .: "channel"
     parseJSON _ = mzero
+
+instance Displayable Stream where
+    dsp st = [name, game, status, viewers]
+             where ch = stChannel st
+                   name = chName ch
+                   game = chGame ch
+                   status = chStatus ch
+                   viewers = show $ stViewers st
 
 data Channel = Channel {
     chName :: String,
